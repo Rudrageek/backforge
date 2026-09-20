@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from backforge.generator.auth import generate_register_route
+from backforge.generator.auth_login import generate_login_route
 from backforge.generator.next_api import generate_next_api_route
 from backforge.generator.package_json import generate_package_json
 from backforge.generator.prisma import generate_prisma_schema
@@ -129,6 +130,7 @@ def generate_backend(plan, output_root: str) -> list[Path]:
         and authentication.get("method")
         == "email_password"
     ):
+        # Register
         register_route = generate_register_route()
 
         generated_files.append(
@@ -136,6 +138,17 @@ def generate_backend(plan, output_root: str) -> list[Path]:
                 output_root,
                 "src/app/api/auth/register/route.ts",
                 register_route,
+            )
+        )
+
+        # Login
+        login_route = generate_login_route()
+
+        generated_files.append(
+            write_generated_file(
+                output_root,
+                "src/app/api/auth/login/route.ts",
+                login_route,
             )
         )
 

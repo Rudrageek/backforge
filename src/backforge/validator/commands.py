@@ -6,35 +6,27 @@ def run_command(
     command: list[str],
     project_path: str,
 ) -> dict:
-    """
-    Run a command inside the generated project
-    and capture its result.
-    """
-
     result = subprocess.run(
         command,
         cwd=project_path,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
 
     return {
         "command": " ".join(command),
         "returncode": result.returncode,
         "success": result.returncode == 0,
-        "stdout": result.stdout.strip(),
-        "stderr": result.stderr.strip(),
+        "stdout": (result.stdout or "").strip(),
+        "stderr": (result.stderr or "").strip(),
     }
 
 
 def verify_generated_project(
     project_path: str,
 ) -> dict:
-    """
-    Run Prisma generation and TypeScript
-    validation against the generated backend.
-    """
-
     root = Path(project_path)
 
     if not root.exists():
@@ -49,7 +41,36 @@ def verify_generated_project(
     steps = []
 
     # --------------------------------------------------
-    # Prisma generation
+    # Install dependencies
+    # --------------------------------------------------
+
+    package_json = root / "package.json"
+
+    if package_json.exists():
+        install_result = run_command(
+            ["npm", "install"],
+            project_path,
+        )
+
+        steps.append(
+            {
+                "name": "npm_install",
+                **install_result,
+            }
+        )
+
+        if not install_result["success"]:
+            return {
+                "valid": False,
+                "steps": steps,
+                "errors": [
+                    install_result["stderr"]
+                    or install_result["stdout"]
+                ],
+            }
+
+    # --------------------------------------------------
+    # Prisma
     # --------------------------------------------------
 
     prisma_result = run_command(
@@ -75,7 +96,7 @@ def verify_generated_project(
         }
 
     # --------------------------------------------------
-    # TypeScript validation
+    # TypeScript
     # --------------------------------------------------
 
     typescript_result = run_command(
