@@ -1,4 +1,7 @@
-from backforge.analyzer.auth import generate_user_entity
+from backforge.analyzer.auth import (
+    generate_session_entity,
+    generate_user_entity,
+)
 from backforge.analyzer.schema import generate_database_models
 from backforge.blueprint.specification import BackendSpecification
 
@@ -8,10 +11,6 @@ def apply_answer(
     question_id: str,
     answer: str,
 ) -> BackendSpecification:
-    """
-    Apply a configuration answer to the
-    backend specification.
-    """
 
     if question_id == "authentication_method":
 
@@ -24,16 +23,23 @@ def apply_answer(
         if answer == "email_password":
 
             user_entity = generate_user_entity()
+            session_entity = generate_session_entity()
 
             existing_entities = [
                 entity
                 for entity in specification.entities
-                if entity.get("name") != "User"
+                if entity.get("name") not in {
+                    "User",
+                    "Session",
+                }
             ]
 
             specification.entities = (
                 existing_entities
-                + [user_entity]
+                + [
+                    user_entity,
+                    session_entity,
+                ]
             )
 
             specification.database = {

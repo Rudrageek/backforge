@@ -1,7 +1,11 @@
+import secrets
+
+
 def generate_login_route() -> str:
     return """import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { compare } from "bcryptjs";
+import { randomBytes } from "crypto";
 
 export async function POST(
   request: NextRequest
@@ -47,7 +51,21 @@ export async function POST(
     );
   }
 
-  return Response.json(
+  const token = randomBytes(32).toString("hex");
+
+  const expiresAt = new Date(
+    Date.now() + 7 * 24 * 60 * 60 * 1000
+  );
+
+  const session = await prisma.session.create({
+    data: {
+      token,
+      userId: user.id,
+      expiresAt,
+    },
+  });
+
+  const response = Response.json(
     {
       id: user.id,
       email: user.email,
@@ -55,5 +73,12 @@ export async function POST(
     },
     { status: 200 }
   );
+
+  response.headers.set(
+    "Set-Cookie",
+    `session_token=${session.token}; HttpOnly; Path=/; Max-Age=604800; SameSite=Lax`
+  );
+
+  return response;
 }
 """
