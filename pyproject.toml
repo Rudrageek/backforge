@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "backforge"
+version = "0.1.0"
+description = "Frontend-to-backend architecture and generation platform"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "tree-sitter",
+    "tree-sitter-javascript",
+    "tree-sitter-typescript",
+    "typer",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[project.scripts]
+backforge = "backforge.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
